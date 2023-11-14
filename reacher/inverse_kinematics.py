@@ -28,12 +28,10 @@ def ik_cost(end_effector_pos, guess):
         position based on the guess.
     """
     # Initialize cost to zero
-    cost = 0.0
+    # cost = 0.0
     guess_fk = forward_kinematics.fk_foot(guess)
-    cost = np.linalg.norm(end_effector_pos - guess_fk)
-    # write the cost to a file
-    with open("ik_cost.txt", "a") as myfile:
-        myfile.write(str(cost) + "\n")
+    guess_trans = guess_fk[:3, 3]
+    cost = np.linalg.norm(end_effector_pos - guess_trans)
     return cost
 
 def calculate_jacobian_FD(joint_angles, delta):
@@ -102,6 +100,7 @@ def calculate_inverse_kinematics(end_effector_pos, guess):
 
         # Take a full Newton step to update the guess for joint angles
         # cost = # Add your solution here.
+
         guess += step
         # Calculate the cost based on the updated guess
         if abs(previous_cost - cost) < TOLERANCE:
