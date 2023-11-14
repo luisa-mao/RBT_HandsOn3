@@ -29,9 +29,11 @@ def ik_cost(end_effector_pos, guess):
     """
     # Initialize cost to zero
     cost = 0.0
-
-    # Add your solution here.
-
+    guess_fk = forward_kinematics.fk_foot(guess)
+    cost = np.linalg.norm(end_effector_pos - guess_fk)
+    # write the cost to a file
+    with open("ik_cost.txt", "a") as myfile:
+        myfile.write(str(cost) + "\n")
     return cost
 
 def calculate_jacobian_FD(joint_angles, delta):
@@ -53,6 +55,15 @@ def calculate_jacobian_FD(joint_angles, delta):
     J = np.zeros((3, 3))
 
     # Add your solution here.
+    for i in range(3):
+        joint_angles_perturbed = copy.deepcopy(joint_angles)
+        joint_angles_perturbed[i] += delta
+        homogenous_transformation_matrix_perturbed = forward_kinematics.fk_foot(joint_angles_perturbed)
+        homogenous_transformation_matrix = forward_kinematics.fk_foot(joint_angles)
+        end_effector_pos_perturbed = homogenous_transformation_matrix_perturbed[:3, 3]
+        end_effector_pos = homogenous_transformation_matrix[:3, 3]
+        J[:, i] = (end_effector_pos_perturbed - end_effector_pos) / delta
+
 
     return J
 
@@ -79,13 +90,19 @@ def calculate_inverse_kinematics(end_effector_pos, guess):
 
     for iters in range(MAX_ITERATIONS):
         # Calculate the Jacobian matrix using finite differences
+        J = calculate_jacobian_FD(guess, PERTURBATION)
 
         # Calculate the residual
+        homogenous_transformation_matrix = forward_kinematics.fk_foot(guess)
+        end_effector_pos_fk = homogenous_transformation_matrix[:3, 3]
+        residual = end_effector_pos - end_effector_pos_fk
 
         # Compute the step to update the joint angles using the Moore-Penrose pseudoinverse using numpy.linalg.pinv
+        step = np.dot(np.linalg.pinv(J), residual)
 
         # Take a full Newton step to update the guess for joint angles
         # cost = # Add your solution here.
+        guess += step
         # Calculate the cost based on the updated guess
         if abs(previous_cost - cost) < TOLERANCE:
             break

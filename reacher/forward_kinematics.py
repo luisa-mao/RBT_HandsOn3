@@ -66,42 +66,7 @@ def fk_hip(joint_angles):
     4x4 matrix representing the pose of the hip frame in the base frame
   """
   hip_angle, shoulder_angle, elbow_angle = joint_angles
-
-  
-  d1 = 0  
-  a1 = 0  
-  alpha1 = 0  
-
-  d2 = 0  
-  a2 = 0  
-  alpha2 = 0  
-
-  d3 = 0  
-  a3 = 0  
-  alpha3 = 0  
-
-  T1 = np.array([
-      [np.cos(hip_angle), -np.sin(hip_angle), 0, 0],
-      [np.sin(hip_angle), np.cos(hip_angle), 0, 0],
-      [0, 0, 1, d1],
-      [0, 0, 0, 1]
-  ])
-
-  T2 = np.array([
-      [np.cos(shoulder_angle), -np.sin(shoulder_angle), 0, 0],
-      [0, 0, -1, -d2],
-      [np.sin(shoulder_angle), np.cos(shoulder_angle), 0, 0],
-      [0, 0, 0, 1]
-  ])
-
-  T3 = np.array([
-      [np.cos(elbow_angle), -np.sin(elbow_angle), 0, 0],
-      [0, 0, 1, d3],
-      [-np.sin(elbow_angle), -np.cos(elbow_angle), 0, 0],
-      [0, 0, 0, 1]
-  ])
-
-  hip_frame = np.dot(np.dot(T1, T2), T3)
+  hip_frame = homogenous_transformation_matrix([0, 0, 1], hip_angle, [0, 0, 0])
 
   return hip_frame
 
@@ -126,36 +91,9 @@ def fk_shoulder(joint_angles):
   # return shoulder_frame
 
   hip_angle, shoulder_angle, elbow_angle = joint_angles
-
-  d1 = 0  
-  a1 = 0  
-  alpha1 = 0  
-
-  d2 = 0  
-  a2 = 0  
-  alpha2 = 0  
-
-  T1 = np.array([
-      [np.cos(hip_angle), -np.sin(hip_angle), 0, 0],
-      [np.sin(hip_angle), np.cos(hip_angle), 0, 0],
-      [0, 0, 1, d1],
-      [0, 0, 0, 1]
-  ])
-
-  T2 = np.array([
-      [np.cos(shoulder_angle), -np.sin(shoulder_angle), 0, 0],
-      [0, 0, -1, -d2],
-      [np.sin(shoulder_angle), np.cos(shoulder_angle), 0, 0],
-      [0, 0, 0, 1]
-  ])
-
-  shoulder_frame = np.dot(T1, T2)
-
-  
-  shoulder_frame[0, 3] = 0.15  
-  shoulder_frame[1, 3] = 0.0  
-  shoulder_frame[2, 3] = -0.1  
-
+  hip_matrix = fk_hip(joint_angles)
+  # calculate the position of the shoulder frame in the base frame
+  shoulder_frame = np.dot(hip_matrix, homogenous_transformation_matrix([0, 1, 0], shoulder_angle, [0, -HIP_OFFSET, 0]))
   return shoulder_frame
   
 def fk_elbow(joint_angles):
@@ -176,37 +114,12 @@ def fk_elbow(joint_angles):
   #   [[np.eye(3), default_sphere_location.T], 
   #    [0, 0, 0, 1]])
   # return elbow_frame
+
+  # calculate the position of the elbow frame in the base frame
   hip_angle, shoulder_angle, elbow_angle = joint_angles
-
-  
-  d1 = 0  
-  a1 = 0  
-  alpha1 = 0  
-
-  d2 = 0  
-  a2 = 0  
-  alpha2 = 0  
-
-  d3 = 0  
-  a3 = 0 
-  alpha3 = 0  
-
-  T1 = np.array([
-      [np.cos(hip_angle), -np.sin(hip_angle), 0, 0],
-      [np.sin(hip_angle), np.cos(hip_angle), 0, 0],
-      [0, 0, 1, d1],
-      [0, 0, 0, 1]
-  ])
-
-  T2 = np.array([
-      [np.cos(shoulder_angle), -np.sin(shoulder_angle), 0, 0],
-      [0, 0, -1, -d2],
-      [np.sin(shoulder_angle), np.cos(shoulder_angle), 0, 0],
-      [0, 0, 0, 1]
-  ])
-
-  elbow_frame = np.dot(np.dot(T1, T2), np.array([[np.eye(3), [0.15, 0.1, -0.1]], [0, 0, 0, 1]]))
-
+  shoulder_to_hip = fk_shoulder(joint_angles)
+  elbow_to_shoulder = homogenous_transformation_matrix([0, 1, 0], elbow_angle, [0, 0, UPPER_LEG_OFFSET])
+  elbow_frame = np.dot(shoulder_to_hip, elbow_to_shoulder)
   return elbow_frame
 
 def fk_foot(joint_angles):
@@ -222,46 +135,8 @@ def fk_foot(joint_angles):
   """
 
   # remove these lines when you write your solution
-  # default_sphere_location = np.array([[0.15, 0.2, -0.1]])
-  # end_effector_frame = np.block(
-  #   [[np.eye(3), default_sphere_location.T], 
-  #    [0, 0, 0, 1]])
-  # return end_effector_frame
-  hip_angle, shoulder_angle, elbow_angle = joint_angles
-
-  
-  d1 = 0 
-  a1 = 0  
-  alpha1 = 0  
-
-  d2 = 0  
-  a2 = 0  
-  alpha2 = 0  
-
-  d3 = 0  
-  a3 = 0  
-  alpha3 = 0  
-
-  T1 = np.array([
-      [np.cos(hip_angle), -np.sin(hip_angle), 0, 0],
-      [np.sin(hip_angle), np.cos(hip_angle), 0, 0],
-      [0, 0, 1, d1],
-      [0, 0, 0, 1]
-  ])
-
-  T2 = np.array([
-      [np.cos(shoulder_angle), -np.sin(shoulder_angle), 0, 0],
-      [0, 0, -1, -d2],
-      [np.sin(shoulder_angle), np.cos(shoulder_angle), 0, 0],
-      [0, 0, 0, 1]
-  ])
-
-  T3 = np.array([
-      [np.cos(elbow_angle), -np.sin(elbow_angle), 0, 0],
-      [0, 0, 1, d3],
-      [-np.sin(elbow_angle), -np.cos(elbow_angle), 0, 0],
-      [0, 0, 0, 1]
-  ])
-
-  end_effector_frame = np.dot(np.dot(np.dot(T1, T2), T3), np.array([[np.eye(3), [0.15, 0.2, -0.1]], [0, 0, 0, 1]]))
+  hip_ange, shoulder_angle, elbow_angle = joint_angles
+  elbow_to_base = fk_elbow(joint_angles)
+  foot_to_elbow = homogenous_transformation_matrix([0, 0, 0], 0, [0, 0, LOWER_LEG_OFFSET])
+  end_effector_frame = np.dot(elbow_to_base, foot_to_elbow)
   return end_effector_frame
