@@ -8,7 +8,7 @@ UPPER_LEG_OFFSET = 0.10 # length of link 1
 LOWER_LEG_OFFSET = 0.13 # length of link 2
 TOLERANCE = 0.01 # tolerance for inverse kinematics
 PERTURBATION = 0.0001 # perturbation for finite difference method
-MAX_ITERATIONS = 10
+MAX_ITERATIONS = 100
 
 def ik_cost(end_effector_pos, guess):
     """Calculates the inverse kinematics cost.
@@ -66,6 +66,8 @@ def calculate_jacobian_FD(joint_angles, delta):
     return J
 
 def calculate_inverse_kinematics(end_effector_pos, guess):
+    # print guess
+    print("guess", guess)
     """
     Calculate the inverse kinematics solution using the Newton-Raphson method.
 
@@ -91,20 +93,19 @@ def calculate_inverse_kinematics(end_effector_pos, guess):
         J = calculate_jacobian_FD(guess, PERTURBATION)
 
         # Calculate the residual
-        homogenous_transformation_matrix = forward_kinematics.fk_foot(guess)
-        end_effector_pos_fk = homogenous_transformation_matrix[:3, 3]
-        residual = end_effector_pos - end_effector_pos_fk
+        residual = end_effector_pos - forward_kinematics.fk_foot(guess)[:3, 3]
 
         # Compute the step to update the joint angles using the Moore-Penrose pseudoinverse using numpy.linalg.pinv
-        step = np.dot(np.linalg.pinv(J), residual)
+        step = np.linalg.pinv(J) @ residual
 
         # Take a full Newton step to update the guess for joint angles
-        # cost = # Add your solution here.
-
         guess += step
+        # cost = # Add your solution here.
+        cost = ik_cost(end_effector_pos, guess)
         # Calculate the cost based on the updated guess
         if abs(previous_cost - cost) < TOLERANCE:
             break
         previous_cost = cost
 
+    print("cost", cost)
     return guess

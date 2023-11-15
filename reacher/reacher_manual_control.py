@@ -94,6 +94,7 @@ def main(argv):
         force=2.
       )
 
+  print("starting joint values", joint_angles)
   print("\nRobot Status:\n")
 
   # Main loop
@@ -143,10 +144,6 @@ def main(argv):
                 joint_angles = np.array(flags.FLAGS.set_joint_angles, dtype=np.float32)
               print("Prevented operation on real robot as inverse kinematics solution was not correct")
 
-      # If real-to-sim, update the joint angles based on the actual robot joint angles
-      if real_to_sim:
-        joint_angles = hardware_interface.robot_state.position[6:9]
-        joint_angles[0] *= -1
 
       # Set the simulated robot to match the joint angles
       for idx, joint_id in enumerate(joint_ids):
@@ -157,6 +154,10 @@ def main(argv):
           joint_angles[idx],
           force=2.
         )
+      # If real-to-sim, update the joint angles based on the actual robot joint angles
+      if real_to_sim:
+        joint_angles = hardware_interface.robot_state.position[6:9]
+        joint_angles[0] *= -1
 
       # Set the robot angles to match the joint angles
       if run_on_robot and enable:
